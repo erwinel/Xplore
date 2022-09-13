@@ -353,11 +353,12 @@ XploreRunner.prototype.run = function run(options) {
     // Try to validate the script first and automatically switch to hoisting if
     // we have an invalid return.
     try {
-      this.validateScript(script);
+      options.scope = options.scope || 'global';
+      this.validateScript(script, options.scope);
     } catch (e) {
       if (e.toString().indexOf('invalid return') === 0) {
         try {
-          this.validateScript('(function () {' + script + '}).call(this)');
+          this.validateScript('(function () {' + script + '}).call(this)', options.scope);
           options.support_hoisting = true;
         } catch (e2) {
           throw e; // throw the original error
@@ -493,8 +494,18 @@ XploreRunner.prototype.logRequest = function logRequest(code, scope) {
   returns: true
   throws: string
 **/
-XploreRunner.prototype.validateScript = function validateScript(script) {
-  var error = GlideSystemUtilScript._getScriptError(script);
+XploreRunner.prototype.validateScript = function validateScript(script, scope) {
+  var validator = new JSValidator();
+  validator.getParameter = function getParameter(name) {
+    if (name == 'sysparm_js_expression') {
+      return script;
+    }
+    if (name == 'sysparm_js_scope') { // only available from Tokyo
+      return scope;
+    }
+  };
+
+  var error = validator.validate();
   if (error) {
     var e = new SyntaxError(error);
     var m = error.match(/(.+) at line \((\d+)\) column \((\d+)\) problem = (.+)/);
@@ -553,9 +564,9 @@ XploreRunner.prototype.runScopedScript = function runScopedScript(script, option
   })(options.scope);
 
   var safe_options = JSON.stringify(options, function (name, value) {
-  if (name.indexOf('user_data') == -1) {
+    if (name.indexOf('user_data') == -1) {
       return value;
-  }
+    }
   });
 
   var try_script = '"try {" + $$script + "\\n;} catch (e) { e; }"';
@@ -574,7 +585,7 @@ XploreRunner.prototype.runScopedScript = function runScopedScript(script, option
   scopedScript += '$$result = x.reporter.getReport();\n';
 
   try {
-    this.validateScript(scopedScript);
+    this.validateScript(scopedScript, options.scope);
   } catch (e) {
     e.name = 'Scoped Script Generation SyntaxError';
     throw this.handleException(e, scopedScript);

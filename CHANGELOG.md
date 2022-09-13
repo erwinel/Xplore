@@ -1,5 +1,15 @@
 # Xplore: Developer Toolkit
-A toolkit for every ServiceNow developer. Find more at https://thewhitespace.io.
+A toolkit for every ServiceNow developer.
+
+### Version 4.12.1
+* Fixed JS Validation issue in pre-Tokyo versions caused by fix for Tokyo.
+
+### Version 4.12
+* Tested on Tokyo. Fixed issue preventing scripts from running.
+* The Xplore Glasses icon is now available in Polaris environments.
+* Added bracket matching in the code editor.
+* Swapped bootstrap CDN to better support IP restricted environments.
+* Added support for automatic code formatting.
 
 ### Version 4.11
 * Tested on Rome and San Diego.
